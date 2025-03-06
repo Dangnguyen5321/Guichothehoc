@@ -7,20 +7,19 @@ using UnityEngine;
 public class Lane : MonoBehaviour
 {
     public Melanchall.DryWetMidi.MusicTheory.NoteName noteRestriction;
-    public KeyCode input;
+    public KeyCode input; // Không còn dùng nữa nhưng giữ lại nếu bạn muốn dùng sau
     public GameObject notePrefab;
     List<Note> notes = new List<Note>();
     public List<double> timeStamps = new List<double>();
-    public List<double> durations = new List<double>(); // Luu thoi luong not
+    public List<double> durations = new List<double>();
 
     int spawnIndex = 0;
-    int inputIndex = 0;
 
-    // Start is called before the first frame update
     void Start()
     {
         
     }
+
     public void SetTimeStamps(Melanchall.DryWetMidi.Interaction.Note[] array)
     {
         foreach (var note in array)
@@ -31,18 +30,15 @@ public class Lane : MonoBehaviour
                 double startTime = (double)metricTimeSpan.Minutes * 60f + metricTimeSpan.Seconds + (double)metricTimeSpan.Milliseconds / 1000f;
                 timeStamps.Add(startTime);
 
-                // Lay thoi luong not
                 var duration = TimeConverter.ConvertTo<MetricTimeSpan>(note.Length, SongManager.midiFile.GetTempoMap());
                 double noteDuration = (double)duration.Minutes * 60f + duration.Seconds + (double)duration.Milliseconds / 1000f;
-                durations.Add(noteDuration); // Luu thoi luong
+                durations.Add(noteDuration);
 
-                //Debug.Log($"Note: {note.NoteName}, Start Time: {startTime}, Duration: {noteDuration}");
                 Debug.Log($"Lane -> Assigned Duration: {durations[spawnIndex]}");
             }
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (spawnIndex < timeStamps.Count)
@@ -51,50 +47,27 @@ public class Lane : MonoBehaviour
             {
                 var note = Instantiate(notePrefab, transform);
                 notes.Add(note.GetComponent<Note>());
-                // Truyền thời gian và thời lượng vào Note
                 var noteComponent = note.GetComponent<Note>();
                 note.GetComponent<Note>().assignedTime = (float)timeStamps[spawnIndex];
-                noteComponent.assignedDuration = (float)durations[spawnIndex]; // Truyền thời lượng nốt
-                //Debug.Log($"[Lane] Spawned Note {spawnIndex} | StartTime: {timeStamps[spawnIndex]}, Duration: {durations[spawnIndex]}");
+                noteComponent.assignedDuration = (float)durations[spawnIndex];
                 spawnIndex++;
             }
         }
-
-        if (inputIndex < timeStamps.Count)
+        
+        if (Input.GetMouseButtonDown(0)) // Nhấp chuột trái
         {
-            double timeStamp = timeStamps[inputIndex];
-            double marginOfError = SongManager.Instance.marginOfError;
-            double audioTime = SongManager.GetAudioSourceTime() - (SongManager.Instance.inputDelayInMilliseconds / 1000.0);
-
-            if (Input.GetKeyDown(input))
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(ray.origin, ray.direction);
+            foreach (var hit in hits)
             {
-                if (Math.Abs(audioTime - timeStamp) < marginOfError)
+                Note note = hit.collider?.GetComponent<Note>();
+                if (note != null)
                 {
-                    Hit();
-                    print($"Hit on {inputIndex} note");
-                    Destroy(notes[inputIndex].gameObject);
-                    inputIndex++;
-                }
-                else
-                {
-                    print($"Hit inaccurate on {inputIndex} note with {Math.Abs(audioTime - timeStamp)} delay");
+                    Note.score++;
+                    Debug.Log($"Tile destroyed! Current score: {Note.score}");
+                    Destroy(note.gameObject);
                 }
             }
-            if (timeStamp + marginOfError <= audioTime)
-            {
-                Miss();
-                print($"Missed {inputIndex} note");
-                inputIndex++;
-            }
-        }       
-    
-    }
-    private void Hit()
-    {
-        ScoreManager.Hit();
-    }
-    private void Miss()
-    {
-        ScoreManager.Miss();
+        }
     }
 }

@@ -13,11 +13,8 @@ public class SongManager : MonoBehaviour
     public AudioSource audioSource;
     public Lane[] lanes;
     public float songDelayInSeconds;
-    public double marginOfError; // in seconds
-
+    public double marginOfError;
     public int inputDelayInMilliseconds;
-    
-
     public string fileLocation;
     public float noteTime;
     public float noteSpawnY;
@@ -31,7 +28,7 @@ public class SongManager : MonoBehaviour
     }
 
     public static MidiFile midiFile;
-    // Start is called before the first frame update
+
     void Start()
     {
         Instance = this;
@@ -72,19 +69,6 @@ public class SongManager : MonoBehaviour
         midiFile = MidiFile.Read(Application.streamingAssetsPath + "/" + fileLocation);
         GetDataFromMidi();
     }
-    //public void GetDataFromMidi()
-    //{
-    //    var notes = midiFile.GetNotes();
-    //    var array = new Melanchall.DryWetMidi.Interaction.Note[notes.Count];
-    //    notes.CopyTo(array, 0);
-
-    //    // Tu dong phan tich cao do va gan Lane
-    //    DistributeNotesToLanes(array);
-
-    //    foreach (var lane in lanes) lane.SetTimeStamps(array);
-
-    //    Invoke(nameof(StartSong), songDelayInSeconds);
-    //}
 
     public void GetDataFromMidi()
     {
@@ -93,7 +77,6 @@ public class SongManager : MonoBehaviour
         var array = new Melanchall.DryWetMidi.Interaction.Note[notes.Count];
         notes.CopyTo(array, 0);
 
-        // Kiểm tra tempo và log thông tin
         foreach (var tempoChange in tempoMap.GetTempoChanges())
         {
             var tempo = tempoChange.Value.BeatsPerMinute;
@@ -101,7 +84,6 @@ public class SongManager : MonoBehaviour
             Debug.Log($"Tempo: {tempo} BPM, Time: {time}");
         }
 
-        // Phân tích và gán vào lanes
         DistributeNotesToLanes(array);
         foreach (var lane in lanes) lane.SetTimeStamps(array);
 
@@ -112,6 +94,7 @@ public class SongManager : MonoBehaviour
     {
         audioSource.Play();
     }
+
     public static double GetAudioSourceTime()
     {
         return (double)Instance.audioSource.timeSamples / Instance.audioSource.clip.frequency;
@@ -119,7 +102,6 @@ public class SongManager : MonoBehaviour
 
     public void DistributeNotesToLanes(Melanchall.DryWetMidi.Interaction.Note[] allNotes)
     {
-        // Lay danh sach cao do duy nhat va sap xep tang dan
         var noteValues = new HashSet<int>();
         foreach (var note in allNotes)
         {
@@ -129,7 +111,6 @@ public class SongManager : MonoBehaviour
         var sortedNotes = new List<int>(noteValues);
         sortedNotes.Sort();
 
-        // Phan chia cao do vao tung lane
         int laneCount = lanes.Length;
 
         for (int i = 0; i < sortedNotes.Count; i++)
