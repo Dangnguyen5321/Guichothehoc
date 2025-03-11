@@ -43,4 +43,25 @@ public class Note : MonoBehaviour
     {
         transform.localScale = new Vector3(1, assignedDuration * 4, 1);
     }
+
+    public Color gizmoColor = Color.red;
+    public float gizmoRadius = 0.5f;
+
+    // Hàm này được gọi trong editor để vẽ gizmo
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = gizmoColor; // Thiết lập màu cho gizmo
+
+        // Vẽ một vòng tròn 2D tại vị trí của GameObject
+        Gizmos.DrawWireSphere(transform.position, gizmoRadius);
+    }
+
+    // Hàm này chỉ được gọi khi GameObject được chọn trong editor
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.green; // Màu khác khi được chọn
+
+        // Vẽ một vòng tròn 2D tại vị trí của GameObject khi được chọn
+        Gizmos.DrawWireSphere(transform.position, gizmoRadius);
+    }
 }
